@@ -1,0 +1,80 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:       #0f0e0c;
+  --ink-soft:  #3d3a34;
+  --ink-mute:  #7a7468;
+  --paper:     #faf8f4;
+  --paper-2:   #f2ede4;
+  --paper-3:   #e8e0d2;
+  --gold:      #b8973a;
+  --gold-light:#d4af5a;
+  --gold-pale: #f5edd8;
+  --teal:      #2a6b6e;
+  --teal-light:#3d8f93;
+  --red:       #c0392b;
+  --white:     #ffffff;
+  --shadow-sm: 0 1px 4px rgba(15,14,12,0.08);
+  --shadow-md: 0 4px 16px rgba(15,14,12,0.10);
+  --shadow-lg: 0 12px 40px rgba(15,14,12,0.14);
+  --radius:    12px;
+  --radius-sm: 8px;
+  --radius-lg: 20px;
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body:    'DM Sans', system-ui, sans-serif;
+}
+
+html { font-size: 16px; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.25; }
+
+a { color: var(--teal); text-decoration: none; }
+a:hover { color: var(--teal-light); }
+
+button { font-family: var(--font-body); cursor: pointer; border: none; }
+
+input, textarea, select {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: var(--ink);
+  background: var(--white);
+  border: 1.5px solid var(--paper-3);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.9rem;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(42,107,110,0.1);
+}
+
+textarea { resize: vertical; min-height: 140px; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--paper-2); }
+::-webkit-scrollbar-thumb { background: var(--paper-3); border-radius: 99px; }
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.fade-in { animation: fadeIn 0.35s ease both; }
+.spin { animation: spin 0.8s linear infinite; }
+
+/* Utility */
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
