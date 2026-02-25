@@ -26,7 +26,8 @@ ZAPIER_SMS          = os.getenv("ZAPIER_SMS_URL", "")
 
 DB_PATH = os.getenv("DATABASE_PATH", "mpg_pods.db")
 
-claude = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+import httpx
+claude = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY, http_client=httpx.Client())
 
 LISTEN_NOTES_BASE = "https://listen-api.listennotes.com/api/v2"
 LISTEN_HEADERS    = {"X-ListenAPI-Key": LISTEN_NOTES_KEY}
