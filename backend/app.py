@@ -162,7 +162,7 @@ Only recommend frameworks that genuinely apply. For each:
 - Name of framework
 - One-sentence description of what it is
 - Why it applies to THIS session (generic, not client-specific)
-- A real URL to an authoritative page explaining implementation (Harvard Business Review, McKinsey, MindTools, etc.)
+- A real URL to an authoritative page explaining implementation. Use only stable, well-known URLs that are unlikely to 404. Prefer Wikipedia, MindTools, or official framework websites over specific HBR or McKinsey articles. Example good URLs: https://www.mindtools.com/pages/article/newPPM_91.htm or https://en.wikipedia.org/wiki/OKR. Never invent URLs.
 
 STEP 4 — DRAFT SMS MESSAGE
 Write a warm, casual peer-to-peer message (like texting a colleague).
