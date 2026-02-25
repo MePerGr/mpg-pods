@@ -57,7 +57,7 @@ export default function NewSession() {
       })
       const data = await r.json()
       if (!data.success) throw new Error(data.error || 'Processing failed')
-      nav(`/session/${data.session_id}`)
+      nav(`/sessions/${data.session_id}`)
     } catch (e) {
       setError(e.message)
       setProcessing(false)
