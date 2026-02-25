@@ -13,7 +13,7 @@ import anthropic
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__, static_folder='/app/frontend/dist', static_url_path='')
+app = Flask(__name__, static_folder='../frontend/dist', static_url_path='')
 CORS(app)
 
 # ── Config ────────────────────────────────────────────────────────────────────
@@ -252,7 +252,7 @@ def search_listen_notes(keywords: list) -> list:
                     seen_ids.add(ep_id)
                     ep["_score"] = score_episode(ep, keyword)
                     all_episodes.append(ep)
-            time.sleep(0.3)
+            time.sleep(0.1)
         except Exception as e:
             logger.warning(f"Listen Notes search error for '{keyword}': {e}")
 
@@ -412,27 +412,7 @@ def process_session():
         logger.info("Running Claude analysis...")
         analysis = analyze_transcript_with_claude(transcript)
 
-        # 2. Search Listen Notes
-        logger.info("Searching Listen Notes...")
-        keywords = analysis.get("search_keywords", [client_name, "executive leadership"])
-        episodes = search_listen_notes(keywords)
-
-        # 3. Build episode records
-        episode_records = []
-        for ep in episodes:
-            duration = ep.get("audio_length_sec", 0)
-            episode_records.append({
-                "episode_title": ep.get("title_original", ""),
-                "podcast_name": ep.get("podcast", {}).get("title_original", ""),
-                "listen_notes_id": ep.get("id", ""),
-                "listen_notes_url": f"https://www.listennotes.com/e/{ep.get('id','')}",
-                "duration_seconds": duration,
-                "golden_nugget_timestamp": estimate_golden_nugget(duration),
-                "golden_nugget_reason": "High-value insight segment",
-                "relevance_score": ep.get("_score", 0)
-            })
-
-        # 4. Save to DB
+        # 2. Save session to DB immediately after Claude analysis
         db = get_db()
         db.execute("""
             INSERT INTO sessions
@@ -449,6 +429,32 @@ def process_session():
         ))
         db.commit()
         session_id = db.execute("SELECT last_insert_rowid()").fetchone()[0]
+        upsert_frameworks(db, analysis.get("frameworks", []), session_id)
+        db.commit()
+
+        # 3. Search Listen Notes (after session is already saved)
+        logger.info("Searching Listen Notes...")
+        keywords = analysis.get("search_keywords", [client_name, "executive leadership"])
+        try:
+            episodes = search_listen_notes(keywords)
+        except Exception as e:
+            logger.warning(f"Listen Notes search failed: {e}")
+            episodes = []
+
+        # 4. Build and save episode records
+        episode_records = []
+        for ep in episodes:
+            duration = ep.get("audio_length_sec", 0)
+            episode_records.append({
+                "episode_title": ep.get("title_original", ""),
+                "podcast_name": ep.get("podcast", {}).get("title_original", ""),
+                "listen_notes_id": ep.get("id", ""),
+                "listen_notes_url": f"https://www.listennotes.com/e/{ep.get('id','')}",
+                "duration_seconds": duration,
+                "golden_nugget_timestamp": estimate_golden_nugget(duration),
+                "golden_nugget_reason": "High-value insight segment",
+                "relevance_score": ep.get("_score", 0)
+            })
 
         for ep in episode_records:
             db.execute("""
@@ -463,8 +469,6 @@ def process_session():
                 ep["duration_seconds"], ep["golden_nugget_timestamp"],
                 ep["golden_nugget_reason"], ep["relevance_score"]
             ))
-
-        upsert_frameworks(db, analysis.get("frameworks", []), session_id)
         db.commit()
 
         # Fetch frameworks for response
