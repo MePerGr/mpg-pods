@@ -16,7 +16,7 @@ export default function SessionDetail() {
   const [deliveryStatus, setDeliveryStatus] = useState({})
 
   useEffect(() => {
-    fetch(`/api/session/${id}`)
+    fetch(`/api/sessions/${id}`)
       .then(r => r.json())
       .then(data => {
         setSession(data)
