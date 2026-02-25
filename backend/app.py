@@ -435,10 +435,16 @@ def process_session():
         # 3. Search Listen Notes (after session is already saved)
         logger.info("Searching Listen Notes...")
         keywords = analysis.get("search_keywords", [client_name, "executive leadership"])
+        import signal
+        def _ln_timeout(signum, frame): raise Exception("Listen Notes timeout")
+        signal.signal(signal.SIGALRM, _ln_timeout)
+        signal.alarm(25)
         try:
             episodes = search_listen_notes(keywords)
+            signal.alarm(0)
         except Exception as e:
-            logger.warning(f"Listen Notes search failed: {e}")
+            signal.alarm(0)
+            logger.warning(f"Listen Notes failed or timed out: {e}")
             episodes = []
 
         # 4. Build and save episode records
