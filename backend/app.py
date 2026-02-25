@@ -26,8 +26,7 @@ ZAPIER_SMS          = os.getenv("ZAPIER_SMS_URL", "")
 
 DB_PATH = os.getenv("DATABASE_PATH", "mpg_pods.db")
 
-import httpx
-claude = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY, http_client=httpx.Client())
+claude = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
 LISTEN_NOTES_BASE = "https://listen-api.listennotes.com/api/v2"
 LISTEN_HEADERS    = {"X-ListenAPI-Key": LISTEN_NOTES_KEY}
@@ -585,8 +584,9 @@ def serve(path):
         return send_from_directory(app.static_folder, path)
     return send_from_directory(app.static_folder, "index.html")
 
+
 init_db()
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 5000))
+    port = int(os.getenv("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
