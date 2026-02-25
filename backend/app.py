@@ -218,7 +218,7 @@ def search_listen_notes(keywords: list) -> list:
     all_episodes = []
     seen_ids = set()
 
-    for keyword in keywords[:5]:
+    for keyword in keywords[:3]:
         try:
             params = {
                 "q": keyword,
