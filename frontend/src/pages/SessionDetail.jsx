@@ -33,9 +33,22 @@ export default function SessionDetail() {
   async function deliver(method) {
     if (!session) return
     setDelivering(method)
+
+    const episodeLines = (session.podcasts || []).map(p =>
+      `🎧 ${p.episode_title} — ${p.podcast_name}\nListen: ${p.listen_notes_url}\nStart at: ${p.golden_nugget_timestamp}`
+    ).join('\n\n')
+
+    const frameworkLines = (session.frameworks || []).map(f =>
+      `📚 ${f.name}: ${f.short_description}\nLearn more: ${f.implementation_url}`
+    ).join('\n\n')
+
+    const fullMessage = session.drafted_message +
+      (episodeLines ? `\n\n🎙️ RECOMMENDED EPISODES:\n\n${episodeLines}` : '') +
+      (frameworkLines ? `\n\n🧠 FRAMEWORKS TO EXPLORE:\n\n${frameworkLines}` : '')
+
     const payload = {
       client_name: client ? `${client.first_name} ${client.last_name || ''}`.trim() : session.client_name_raw,
-      message: session.drafted_message,
+      message: fullMessage,
       email: client?.email || '',
       phone: client?.phone || '',
       whatsapp: client?.whatsapp || '',
@@ -44,6 +57,10 @@ export default function SessionDetail() {
         podcast: p.podcast_name,
         url: p.listen_notes_url,
         timestamp: p.golden_nugget_timestamp
+      })) || [],
+      frameworks: session.frameworks?.map(f => ({
+        name: f.name,
+        url: f.implementation_url
       })) || []
     }
     try {
@@ -107,6 +124,7 @@ export default function SessionDetail() {
 
       <div style={{display:'grid',gridTemplateColumns:'1fr 320px',gap:'1.5rem',alignItems:'start'}}>
         <div style={{display:'flex',flexDirection:'column',gap:'1.25rem'}}>
+
           <div className="card">
             <h2 className="card-title">Session Themes</h2>
             <div style={{display:'flex',flexDirection:'column',gap:'0.75rem'}}>
@@ -153,6 +171,7 @@ export default function SessionDetail() {
         </div>
 
         <div style={{display:'flex',flexDirection:'column',gap:'1rem'}}>
+
           <div className="card">
             <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'0.75rem'}}>
               <h3 className="card-title" style={{margin:0,display:'flex',alignItems:'center',gap:'0.5rem'}}>
