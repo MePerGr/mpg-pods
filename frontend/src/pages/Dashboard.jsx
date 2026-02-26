@@ -92,11 +92,7 @@ export default function Dashboard() {
 function StatCard({ icon, label, value, sub }) {
   return (
     <div className="card" style={{display:'flex',alignItems:'center',gap:'1rem'}}>
-      <div style={{
-        width:44,height:44,borderRadius:10,
-        background:'var(--gold-pale)',color:'var(--gold)',
-        display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0
-      }}>{icon}</div>
+      <div style={{width:44,height:44,borderRadius:10,background:'var(--gold-pale)',color:'var(--gold)',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{icon}</div>
       <div>
         <div style={{fontSize:'1.6rem',fontWeight:700,fontFamily:'var(--font-display)',lineHeight:1}}>{value}</div>
         <div style={{fontSize:'0.8rem',color:'var(--ink-mute)',marginTop:'0.2rem'}}>{sub}</div>
@@ -112,22 +108,12 @@ function SessionRow({ session, onClick }) {
     : session.client_name_raw || 'Unknown client'
 
   return (
-    <div onClick={onClick} style={{
-      display:'flex',alignItems:'center',justifyContent:'space-between',
-      padding:'0.75rem 1rem',borderRadius:8,cursor:'pointer',
-      background:'var(--paper)',border:'1px solid var(--paper-3)',
-      transition:'all 0.15s'
-    }}
+    <div onClick={onClick} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0.75rem 1rem',borderRadius:8,cursor:'pointer',background:'var(--paper)',border:'1px solid var(--paper-3)',transition:'all 0.15s'}}
     onMouseEnter={e => e.currentTarget.style.background='var(--paper-2)'}
     onMouseLeave={e => e.currentTarget.style.background='var(--paper)'}
     >
       <div style={{display:'flex',alignItems:'center',gap:'0.75rem'}}>
-        <div style={{
-          width:34,height:34,borderRadius:'50%',
-          background:'var(--ink)',color:'var(--gold)',
-          display:'flex',alignItems:'center',justifyContent:'center',
-          fontSize:'0.8rem',fontWeight:700,flexShrink:0
-        }}>
+        <div style={{width:34,height:34,borderRadius:'50%',background:'var(--ink)',color:'var(--gold)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'0.8rem',fontWeight:700,flexShrink:0}}>
           {clientName.charAt(0).toUpperCase()}
         </div>
         <div>
