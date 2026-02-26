@@ -165,10 +165,13 @@ Only recommend frameworks that genuinely apply. For each:
 STEP 4 — DRAFT SMS MESSAGE
 Write a warm, casual peer-to-peer message (like texting a colleague).
 - DO NOT mention company names
-- DO NOT include a sign-off
+- DO NOT include a sign-off or closing question
+- DO NOT end with questions like "Want me to send it over?" or "Let me know if you want more"
+- The message IS the delivery — write it as if you are already sending the content, not asking permission
 - Reference the themes and why the content is relevant
 - Keep under 150 words — this will be read as a text message
 - Sound personally curated, not automated
+- End with a confident closing line like "Worth a look." or "Think it'll land well."
 
 Respond ONLY with valid JSON in this exact structure:
 {{
