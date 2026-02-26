@@ -1,4 +1,3 @@
-# ── Build frontend ────────────────────────────────────────────────────────────
 FROM node:20-slim AS frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package.json .
@@ -6,7 +5,6 @@ RUN npm install
 COPY frontend/ .
 RUN npm run build
 
-# ── Build backend ─────────────────────────────────────────────────────────────
 FROM python:3.11-slim
 WORKDIR /app
 
