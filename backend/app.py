@@ -8,7 +8,7 @@ from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import anthropic
-import libsql_experimental as libsql
+import sqlite3
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -24,8 +24,7 @@ ZAPIER_EMAIL_CLIENT = os.getenv("ZAPIER_EMAIL_CLIENT_URL", "")
 ZAPIER_WHATSAPP     = os.getenv("ZAPIER_WHATSAPP_URL", "")
 ZAPIER_SMS          = os.getenv("ZAPIER_SMS_URL", "")
 
-TURSO_URL = os.getenv("TURSO_URL", "")
-TURSO_TOKEN = os.getenv("TURSO_TOKEN", "")
+DB_PATH = os.getenv("DATABASE_PATH", "/app/backend/mpg_pods.db")
 
 claude = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
@@ -34,7 +33,9 @@ LISTEN_HEADERS    = {"X-ListenAPI-Key": LISTEN_NOTES_KEY}
 
 # ── Database ──────────────────────────────────────────────────────────────────
 def get_db():
-    conn = libsql.connect(TURSO_URL, auth_token=TURSO_TOKEN)
+    db_path = os.getenv("DATABASE_PATH", "/app/backend/mpg_pods.db")
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
     return conn
 
 def init_db():
