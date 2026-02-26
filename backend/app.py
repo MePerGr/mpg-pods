@@ -530,11 +530,14 @@ def process_session():
         for ep in episodes:
             duration_ms = ep.get("trackTimeMillis", 0)
             duration_sec = duration_ms // 1000 if duration_ms else 0
-            apple_url = ep.get("trackViewUrl", "")
+            track_id = ep.get("trackId", "")
+            collection_id = ep.get("collectionId", "")
+            # Build direct Apple Podcasts episode link
+            apple_url = f"https://podcasts.apple.com/podcast/id{collection_id}?i={track_id}" if track_id and collection_id else ep.get("trackViewUrl", "")
             episode_records.append({
                 "episode_title": ep.get("trackName", ""),
                 "podcast_name": ep.get("collectionName", ""),
-                "listen_notes_id": str(ep.get("trackId", "")),
+                "listen_notes_id": str(track_id),
                 "listen_notes_url": apple_url,
                 "apple_url": apple_url,
                 "duration_seconds": duration_sec,
