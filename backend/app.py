@@ -304,41 +304,64 @@ QUALITY_PODCASTS = [
 ]
 
 def search_itunes(keywords: list) -> list:
-    """Search iTunes/Apple Podcasts for high-quality relevant episodes."""
+    """Search iTunes by searching within quality podcasts specifically."""
     all_episodes = []
     seen_ids = set()
 
+    # Search each keyword combined with top podcast names for precision
+    top_podcasts = [
+        "Huberman Lab", "The Knowledge Project", "Finding Mastery",
+        "HBR IdeaCast", "WorkLife with Adam Grant", "Dare to Lead",
+        "The Tim Ferriss Show", "Masters of Scale", "The Diary of a CEO",
+        "Coaching for Leaders", "Ten Percent Happier", "The High Performance Podcast"
+    ]
+
     for keyword in keywords[:3]:
-        try:
-            params = {
-                "term": keyword + " executive leadership coaching mindset performance",
-                "media": "podcast",
-                "entity": "podcastEpisode",
-                "limit": 20,
-                "lang": "en_us",
-            }
-            r = requests.get(
-                "https://itunes.apple.com/search",
-                params=params,
-                timeout=10
-            )
-            if r.status_code == 200:
-                for ep in r.json().get("results", []):
-                    ep_id = ep.get("trackId")
-                    if not ep_id or ep_id in seen_ids:
-                        continue
-                    score = score_itunes_episode(ep, keyword)
-                    if score < 3:  # Skip low quality
-                        continue
-                    seen_ids.add(ep_id)
-                    ep["_score"] = score
-                    all_episodes.append(ep)
-            time.sleep(0.1)
-        except Exception as e:
-            logger.warning(f"iTunes search error for '{keyword}': {e}")
+        for podcast in top_podcasts[:4]:  # Search top 4 podcasts per keyword
+            try:
+                params = {
+                    "term": f"{keyword} {podcast}",
+                    "media": "podcast",
+                    "entity": "podcastEpisode",
+                    "limit": 5,
+                    "lang": "en_us",
+                }
+                r = requests.get(
+                    "https://itunes.apple.com/search",
+                    params=params,
+                    timeout=8
+                )
+                if r.status_code == 200:
+                    for ep in r.json().get("results", []):
+                        ep_id = ep.get("trackId")
+                        if not ep_id or ep_id in seen_ids:
+                            continue
+                        # Hard filter: must be from a quality podcast
+                        ep_podcast = ep.get("collectionName", "").lower()
+                        if not any(q.lower() in ep_podcast for q in QUALITY_PODCASTS):
+                            continue
+                        score = score_itunes_episode(ep, keyword)
+                        if score < 2:
+                            continue
+                        seen_ids.add(ep_id)
+                        ep["_score"] = score
+                        all_episodes.append(ep)
+                time.sleep(0.05)
+            except Exception as e:
+                logger.warning(f"iTunes search error for '{keyword}'/'{podcast}': {e}")
 
     all_episodes.sort(key=lambda x: x.get("_score", 0), reverse=True)
-    return all_episodes[:3]
+    # Deduplicate by podcast — max 1 episode per show
+    seen_podcasts = set()
+    final = []
+    for ep in all_episodes:
+        pod = ep.get("collectionName", "")
+        if pod not in seen_podcasts:
+            seen_podcasts.add(pod)
+            final.append(ep)
+        if len(final) >= 3:
+            break
+    return final
 
 
 def score_itunes_episode(ep: dict, keyword: str) -> float:
@@ -348,17 +371,21 @@ def score_itunes_episode(ep: dict, keyword: str) -> float:
     podcast = ep.get("collectionName", "").lower()
 
     kw = keyword.lower()
-    if kw in title: score += 5
-    if kw in desc:  score += 2
+    if kw in title: score += 6
+    if kw in desc:  score += 3
 
-    # Boost for quality podcast names
-    for q in QUALITY_PODCASTS:
-        if q.lower() in podcast:
-            score += 6
+    # Strong boost for top-tier shows
+    tier1 = ["huberman lab", "knowledge project", "finding mastery", "hbr ideacast",
+             "worklife with adam grant", "dare to lead", "tim ferriss", "masters of scale",
+             "diary of a CEO", "coaching for leaders", "ten percent happier"]
+    for t in tier1:
+        if t in podcast:
+            score += 5
             break
 
     # Boost for executive/leadership terms in title
-    exec_terms = ["ceo", "executive", "leader", "strategy", "founder", "mindset", "coaching"]
+    exec_terms = ["ceo", "executive", "leader", "strategy", "founder", "mindset",
+                  "coaching", "performance", "resilience", "decision", "confidence"]
     for t in exec_terms:
         if t in title:
             score += 1
