@@ -35,7 +35,7 @@ export default function Dashboard() {
           <h1 className="page-title">Good morning</h1>
           <p className="page-sub">Your executive coaching dashboard</p>
         </div>
-        <button className="btn btn-gold" onClick={() => nav('/session/new')}>
+        <button className="btn btn-gold" onClick={() => nav('/sessions/new')}>
           <Plus size={16} /> New Session
         </button>
       </div>
@@ -59,7 +59,7 @@ export default function Dashboard() {
         ) : (
           <div style={{display:'flex',flexDirection:'column',gap:'0.5rem'}}>
             {sessions.slice(0,8).map(s => (
-              <SessionRow key={s.id} session={s} onClick={() => nav(`/session/${s.id}`)} />
+              <SessionRow key={s.id} session={s} onClick={() => nav(`/sessions/${s.id}`)} />
             ))}
           </div>
         )}
