@@ -13,7 +13,7 @@ function Sidebar() {
   const loc = useLocation()
   const nav = [
     { to: '/',          icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/session/new', icon: Plus,          label: 'New Session' },
+    { to: '/sessions/new', icon: Plus,          label: 'New Session' },
     { to: '/clients',   icon: Users,           label: 'Clients' },
     { to: '/frameworks',icon: BookOpen,        label: 'Frameworks' },
     { to: '/settings',  icon: Settings2,       label: 'Settings' },
@@ -55,8 +55,8 @@ export default function App() {
         <main className="app-main">
           <Routes>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/session/new" element={<NewSession />} />
-            <Route path="/session/:id" element={<SessionDetail />} />
+            <Route path="/sessions/new" element={<NewSession />} />
+            <Route path="/sessions/:id" element={<SessionDetail />} />
             <Route path="/clients" element={<Clients />} />
             <Route path="/frameworks" element={<Frameworks />} />
             <Route path="/settings" element={<Settings />} />
