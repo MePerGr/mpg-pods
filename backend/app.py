@@ -169,7 +169,7 @@ Write a warm, casual peer-to-peer message (like texting a colleague).
 - DO NOT mention company names
 - DO NOT include a sign-off
 - Reference the themes and why the content is relevant
-- Keep under 250 words
+- Keep under 150 words — this will be read as a text message
 - Sound personally curated, not automated
 
 Respond ONLY with valid JSON in this exact structure:
