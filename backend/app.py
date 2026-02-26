@@ -432,9 +432,21 @@ def process_session():
         upsert_frameworks(db, analysis.get("frameworks", []), session_id)
         db.commit()
 
-        # 3. Listen Notes temporarily disabled
-        logger.info("Skipping Listen Notes search...")
+        # 3. Search Listen Notes
+        logger.info("Searching Listen Notes...")
+        keywords = analysis.get("search_keywords", [client_name, "executive leadership"])
         episodes = []
+        import signal
+        def _ln_timeout(signum, frame): raise Exception("Listen Notes timeout")
+        signal.signal(signal.SIGALRM, _ln_timeout)
+        signal.alarm(25)
+        try:
+            episodes = search_listen_notes(keywords)
+            signal.alarm(0)
+        except Exception as e:
+            signal.alarm(0)
+            logger.warning(f"Listen Notes failed or timed out: {e}")
+            episodes = []
 
         # 4. Build and save episode records
         episode_records = []
