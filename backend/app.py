@@ -18,7 +18,6 @@ CORS(app)
 
 # ── Config ────────────────────────────────────────────────────────────────────
 ANTHROPIC_API_KEY   = os.getenv("ANTHROPIC_API_KEY", "YOUR_ANTHROPIC_API_KEY")
-LISTEN_NOTES_KEY    = os.getenv("LISTEN_NOTES_API_KEY", "YOUR_LISTEN_NOTES_API_KEY")
 ZAPIER_EMAIL_COACH  = os.getenv("ZAPIER_EMAIL_COACH_URL", "")
 ZAPIER_EMAIL_CLIENT = os.getenv("ZAPIER_EMAIL_CLIENT_URL", "")
 ZAPIER_WHATSAPP     = os.getenv("ZAPIER_WHATSAPP_URL", "")
@@ -28,8 +27,6 @@ DB_PATH = os.getenv("DATABASE_PATH", "/app/backend/mpg_pods.db")
 
 claude = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
-LISTEN_NOTES_BASE = "https://listen-api.listennotes.com/api/v2"
-LISTEN_HEADERS    = {"X-ListenAPI-Key": LISTEN_NOTES_KEY}
 
 # ── Database ──────────────────────────────────────────────────────────────────
 def get_db():
@@ -183,7 +180,7 @@ Respond ONLY with valid JSON in this exact structure:
       "coaching_need": "What would help"
     }}
   ],
-  "search_keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
+  "search_keywords": ["keyword1", "keyword2", "keyword3"],
   "frameworks": [
     {{
       "name": "Framework Name",
@@ -214,75 +211,154 @@ TRANSCRIPT:
     return json.loads(text)
 
 
-def search_listen_notes(keywords: list) -> list:
-    """Search Listen Notes for relevant episodes."""
+# High-quality podcast allowlist mapped to executive coaching domains
+QUALITY_PODCASTS = [
+    # Executive Leadership Development & Advisory
+    "HBR IdeaCast",
+    "The McKinsey Podcast",
+    "Coaching for Leaders",
+    "The Leadership Podcast",
+    "On Leadership",
+    "Masters of Scale",
+    "The CEO Podcast",
+    "How I Built This",
+    "Dare to Lead",
+    "Dare to Lead with Brené Brown",
+
+    # Business Strategy, Growth & Operational Thought Partnership
+    "Acquired",
+    "The Startup Podcast",
+    "How I Built This",
+    "The Tim Ferriss Show",
+    "WorkLife with Adam Grant",
+    "The Diary of a CEO",
+    "Invest Like the Best",
+    "The EntreLeadership Podcast",
+    "Lenny's Podcast",
+    "Masters of Scale",
+
+    # High-Performance Mindset & Confidence Building
+    "Finding Mastery",
+    "Impact Theory",
+    "The School of Greatness",
+    "The Mindset Mentor",
+    "The High Performance Podcast",
+    "Good Life Project",
+    "The Tony Robbins Podcast",
+    "The James Altucher Show",
+    "The Jordan Harbinger Show",
+
+    # Strategic Decision-Making & Capacity Expansion
+    "The Knowledge Project",
+    "Deep Questions with Cal Newport",
+    "Lex Fridman Podcast",
+    "Making Sense with Sam Harris",
+    "Hidden Brain",
+    "Freakonomics Radio",
+
+    # Cross-Functional Leadership & People Management
+    "WorkLife with Adam Grant",
+    "The Culture Code",
+    "Radical Candor",
+    "Manager Tools",
+    "The Diary of a CEO",
+
+    # Effective Communication, Influence & Executive Presence
+    "TED Talks Daily",
+    "The Art of Charm",
+    "The Jordan Harbinger Show",
+    "Exactly Right",
+    "Speak Up with Laura Camacho",
+
+    # Holistic Wellness & Performance (Physical, Nutrition, Sleep, Stress)
+    "Huberman Lab",
+    "The Drive with Peter Attia",
+    "Feel Better Live More",
+    "The Model Health Show",
+    "On Purpose with Jay Shetty",
+    "Ten Percent Happier",
+    "The Rich Roll Podcast",
+    "Optimal Living Daily",
+
+    # Resilience in High-Stakes Environments
+    "Jocko Podcast",
+    "The Tim Ferriss Show",
+    "Finding Mastery",
+    "Armchair Expert",
+    "No Stupid Questions",
+
+    # Personal & Professional Transition Management
+    "Life Kit",
+    "Good Life Project",
+    "The School of Greatness",
+    "Unlocking Us with Brené Brown",
+
+    # Family & Relationship Integration
+    "Where Should We Begin",
+    "On Purpose with Jay Shetty",
+    "Unlocking Us with Brené Brown",
+    "The Gottman Podcast",
+]
+
+def search_itunes(keywords: list) -> list:
+    """Search iTunes/Apple Podcasts for high-quality relevant episodes."""
     all_episodes = []
     seen_ids = set()
 
     for keyword in keywords[:3]:
         try:
             params = {
-                "q": keyword,
-                "type": "episode",
-                "len_min": 20,
-                "len_max": 90,
-                "only_in": "title,description",
-                "language": "English",
-                "safe_mode": 1,
-                "sort_by_date": 0,
+                "term": keyword + " executive leadership coaching mindset performance",
+                "media": "podcast",
+                "entity": "podcastEpisode",
+                "limit": 20,
+                "lang": "en_us",
             }
             r = requests.get(
-                f"{LISTEN_NOTES_BASE}/search",
-                headers=LISTEN_HEADERS,
+                "https://itunes.apple.com/search",
                 params=params,
                 timeout=10
             )
             if r.status_code == 200:
                 for ep in r.json().get("results", []):
-                    ep_id = ep.get("id")
-                    if ep_id in seen_ids:
+                    ep_id = ep.get("trackId")
+                    if not ep_id or ep_id in seen_ids:
                         continue
-                    # Skip Peter Attia
-                    combined = (
-                        ep.get("title_original","") +
-                        ep.get("description_original","") +
-                        ep.get("podcast",{}).get("title_original","")
-                    ).lower()
-                    if "peter attia" in combined:
+                    score = score_itunes_episode(ep, keyword)
+                    if score < 3:  # Skip low quality
                         continue
                     seen_ids.add(ep_id)
-                    ep["_score"] = score_episode(ep, keyword)
+                    ep["_score"] = score
                     all_episodes.append(ep)
             time.sleep(0.1)
         except Exception as e:
-            logger.warning(f"Listen Notes search error for '{keyword}': {e}")
+            logger.warning(f"iTunes search error for '{keyword}': {e}")
 
-    # Sort by score, return top 3
     all_episodes.sort(key=lambda x: x.get("_score", 0), reverse=True)
     return all_episodes[:3]
 
 
-def score_episode(ep: dict, keyword: str) -> float:
+def score_itunes_episode(ep: dict, keyword: str) -> float:
     score = 0.0
-    title = ep.get("title_original", "").lower()
-    desc  = ep.get("description_original", "").lower()
-    pod   = ep.get("podcast", {}).get("title_original", "").lower()
+    title = ep.get("trackName", "").lower()
+    desc  = ep.get("description", "").lower()
+    podcast = ep.get("collectionName", "").lower()
 
     kw = keyword.lower()
     if kw in title: score += 5
     if kw in desc:  score += 2
 
-    authority = ["harvard", "mckinsey", "stanford", "wharton", "mit",
-                 "hbr", "how i built", "masters of scale", "a16z", "tim ferriss"]
-    for a in authority:
-        if a in pod or a in title:
-            score += 3
+    # Boost for quality podcast names
+    for q in QUALITY_PODCASTS:
+        if q.lower() in podcast:
+            score += 6
             break
 
-    exec_terms = ["ceo", "executive", "leader", "strategy", "founder", "mindset"]
+    # Boost for executive/leadership terms in title
+    exec_terms = ["ceo", "executive", "leader", "strategy", "founder", "mindset", "coaching"]
     for t in exec_terms:
-        if t in title or t in desc:
-            score += 0.5
+        if t in title:
+            score += 1
 
     return score
 
@@ -442,7 +518,7 @@ def process_session():
         signal.signal(signal.SIGALRM, _ln_timeout)
         signal.alarm(25)
         try:
-            episodes = search_listen_notes(keywords)
+            episodes = search_itunes(keywords)
             signal.alarm(0)
         except Exception as e:
             signal.alarm(0)
@@ -452,14 +528,17 @@ def process_session():
         # 4. Build and save episode records
         episode_records = []
         for ep in episodes:
-            duration = ep.get("audio_length_sec", 0)
+            duration_ms = ep.get("trackTimeMillis", 0)
+            duration_sec = duration_ms // 1000 if duration_ms else 0
+            apple_url = ep.get("trackViewUrl", "")
             episode_records.append({
-                "episode_title": ep.get("title_original", ""),
-                "podcast_name": ep.get("podcast", {}).get("title_original", ""),
-                "listen_notes_id": ep.get("id", ""),
-                "listen_notes_url": f"https://www.listennotes.com/e/{ep.get('id','')}",
-                "duration_seconds": duration,
-                "golden_nugget_timestamp": estimate_golden_nugget(duration),
+                "episode_title": ep.get("trackName", ""),
+                "podcast_name": ep.get("collectionName", ""),
+                "listen_notes_id": str(ep.get("trackId", "")),
+                "listen_notes_url": apple_url,
+                "apple_url": apple_url,
+                "duration_seconds": duration_sec,
+                "golden_nugget_timestamp": estimate_golden_nugget(duration_sec),
                 "golden_nugget_reason": "High-value insight segment",
                 "relevance_score": ep.get("_score", 0)
             })
